@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.Center
+import androidx.compose.ui.Alignment.Companion.CenterEnd
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -133,18 +134,15 @@ fun PokemonList(
     val isLoading by remember { viewModel.isLoading }
     val isSearching by remember { viewModel.isSearching}
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
-        val itemCount = if(pokemonList.size % 2 == 0) {
-            pokemonList.size / 2
-        } else {
-            pokemonList.size / 2 + 1
-        }
+        val itemCount = pokemonList.size
         items(itemCount) {
             if(it >= itemCount - 1 && !endReached && !isLoading && !isSearching) {
                 LaunchedEffect(key1 = true) {
                     viewModel.loadPokemonPaginated()
                 }
             }
-            PokedexRow(rowIndex = it, entries = pokemonList, navController = navController)
+            PokedexEntry(entry = pokemonList[it], navController = navController)
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 
@@ -180,6 +178,8 @@ fun PokedexEntry(
     Box(
         contentAlignment = Center,
         modifier = modifier
+            .height(100.dp)
+            .fillMaxWidth()
             .shadow(5.dp, RoundedCornerShape(10.dp))
             .clip(RoundedCornerShape(10.dp))
             .aspectRatio(1f)
@@ -198,70 +198,37 @@ fun PokedexEntry(
             }
     ) {
         Column {
-            AsyncImage(
-                model = entry.imageUrl,
-                contentDescription = entry.pokemonName,
-                modifier = Modifier
-                    .size(120.dp)
-                    .align(CenterHorizontally)
-            )
-            /**
-            CoilImage(
-                request = ImageRequest.Builder(LocalContext.current)
-                    .data(entry.imageUrl)
-                    .target {
-                        viewModel.calcDominantColor(it) { color ->
-                            dominantColor = color
-                        }
-                    }
-                    .build(),
-                contentDescription = entry.pokemonName,
-                fadeIn = true,
-                modifier = Modifier
-                    .size(120.dp)
-                    .align(CenterHorizontally)
-            ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.scale(0.5f)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "#" + entry.number.toString().padStart(3, '0'),
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.4f)
                 )
+                Text(
+                    text = entry.pokemonName,
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.7f)
+                )
+                Spacer(modifier = Modifier.weight(0.5f))
             }
-            **/
-            Text(
-                text = entry.pokemonName,
-                fontSize = 20.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-fun PokedexRow(
-    rowIndex: Int,
-    entries: List<PokedexListEntry>,
-    navController: NavController
-) {
-    Column {
-        Row {
-            PokedexEntry(
-                entry = entries[rowIndex * 2],
-                navController = navController,
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            if(entries.size >= rowIndex * 2 + 2) {
-                PokedexEntry(
-                    entry = entries[rowIndex * 2 + 1],
-                    navController = navController,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
+            Row() {
+                
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        AsyncImage(
+            model = entry.imageUrl,
+            contentDescription = entry.pokemonName,
+            modifier = Modifier
+                .size(110.dp)
+                .align(CenterEnd)
+                .padding(10.dp)
+        )
     }
 }
 
