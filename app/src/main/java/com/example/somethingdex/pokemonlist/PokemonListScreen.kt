@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterEnd
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -34,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -47,6 +47,9 @@ import coil.annotation.ExperimentalCoilApi
 import coil.compose.AsyncImage
 import com.example.somethingdex.R
 import com.example.somethingdex.data.models.PokedexListEntry
+import com.example.somethingdex.data.remote.responses.Type
+import com.example.somethingdex.util.parseTypeToColor
+import java.util.Locale
 
 @Composable
 fun PokemonListScreen(
@@ -184,12 +187,15 @@ fun PokedexEntry(
             .clip(RoundedCornerShape(10.dp))
             .aspectRatio(1f)
             .background(
+                /**
                 Brush.verticalGradient(
                     listOf(
                         dominantColor,
                         defaultDominantColor
                     )
                 )
+                **/
+                Color.Magenta
             )
             .clickable {
                 navController.navigate(
@@ -197,15 +203,22 @@ fun PokedexEntry(
                 )
             }
     ) {
-        Column {
-            Row(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .width(225.dp)
+                .align(Alignment.CenterStart)
+        ) {
+            Row (
+                modifier = Modifier
+                    .padding(start = 16.dp, bottom = 8.dp)
+            ) {
                 Text(
                     text = "#" + entry.number.toString().padStart(3, '0'),
                     fontSize = 20.sp,
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.4f)
+                        .weight(0.35f)
                 )
                 Text(
                     text = entry.pokemonName,
@@ -215,11 +228,8 @@ fun PokedexEntry(
                         .fillMaxWidth()
                         .weight(0.7f)
                 )
-                Spacer(modifier = Modifier.weight(0.5f))
             }
-            Row() {
-                
-            }
+            PokemonTypeSection(types = entry.pokemonTypes)
         }
         AsyncImage(
             model = entry.imageUrl,
@@ -227,7 +237,7 @@ fun PokedexEntry(
             modifier = Modifier
                 .size(110.dp)
                 .align(CenterEnd)
-                .padding(10.dp)
+                .padding(10.dp),
         )
     }
 }
@@ -245,6 +255,35 @@ fun RetrySection(
             modifier = Modifier.align(CenterHorizontally)
         ) {
             Text(text = "Retry")
+        }
+    }
+}
+
+@Composable
+fun PokemonTypeSection(types: List<Type>) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        for (type in types) {
+            Box(
+                contentAlignment = Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp)
+                    .clip(CircleShape)
+                    .background(parseTypeToColor(type))
+                    .height(35.dp)
+            ) {
+                Text(
+                    text = type.type.name.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.ROOT
+                        ) else it.toString()
+                    },
+                    color = Color.White,
+                    fontSize = 18.sp
+                )
+            }
         }
     }
 }

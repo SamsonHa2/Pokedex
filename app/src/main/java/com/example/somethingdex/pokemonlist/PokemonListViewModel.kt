@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.somethingdex.data.models.PokedexListEntry
+import com.example.somethingdex.data.remote.responses.Pokemon
 import com.example.somethingdex.repository.PokemonRepository
 import com.example.somethingdex.util.Constants.PAGE_SIZE
 import com.example.somethingdex.util.Resource
@@ -33,6 +34,9 @@ class PokemonListViewModel @Inject constructor(
         loadPokemonPaginated()
     }
 
+    suspend fun getPokemonInfo(pokemonName: String): Resource<Pokemon>{
+        return repository.getPokemonInfo(pokemonName)
+    }
     fun searchPokemonList(query: String) {
         val listToSearch = if(isSearchStarting) {
             pokemonList.value
@@ -65,6 +69,7 @@ class PokemonListViewModel @Inject constructor(
             when(result) {
                 is Resource.Success -> {
                     endReached.value = curPage * PAGE_SIZE >= result.data!!.count
+
                     val pokedexEntries = result.data.results.mapIndexed { index, entry ->
                         val number = if(entry.url.endsWith("/")) {
                             entry.url.dropLast(1).takeLastWhile { it.isDigit() }
@@ -72,11 +77,12 @@ class PokemonListViewModel @Inject constructor(
                             entry.url.takeLastWhile { it.isDigit() }
                         }
                         val url = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${number}.png"
+                        val types = repository.getPokemonInfo(entry.name).data!!.types
                         PokedexListEntry(entry.name.replaceFirstChar {
                             if (it.isLowerCase()) it.titlecase(
                                 Locale.ROOT
                             ) else it.toString()
-                        }, url, number.toInt())
+                        }, url, number.toInt(), types)
                     }
                     curPage++
 
