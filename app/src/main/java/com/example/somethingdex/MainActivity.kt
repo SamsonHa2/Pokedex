@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         installSplashScreen()
         setContent {
+
             SomethingDexTheme {
                 val navController = rememberNavController()
                 NavHost(

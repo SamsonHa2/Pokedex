@@ -1,10 +1,18 @@
 package com.example.somethingdex.pokemonlist
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.palette.graphics.Palette
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.example.somethingdex.data.models.PokedexListEntry
-import com.example.somethingdex.data.remote.responses.Pokemon
 import com.example.somethingdex.repository.PokemonRepository
 import com.example.somethingdex.util.Constants.PAGE_SIZE
 import com.example.somethingdex.util.Resource
@@ -34,9 +42,36 @@ class PokemonListViewModel @Inject constructor(
         loadPokemonPaginated()
     }
 
-    suspend fun getPokemonInfo(pokemonName: String): Resource<Pokemon>{
-        return repository.getPokemonInfo(pokemonName)
+    private fun calcDominantColor(drawable: Drawable, onFinish: (Color) -> Unit) {
+        val bmp = (drawable as BitmapDrawable).bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        Palette.from(bmp).generate{ palette ->
+            palette?.dominantSwatch?.rgb?.let { colorValue ->
+                onFinish(Color(colorValue))
+            }
+        }
     }
+
+    fun fetchColors(url: String, context: Context, onCalculated: (Color) -> Unit) {
+        viewModelScope.launch {
+            // Requesting the image using coil's ImageRequest
+            val req = ImageRequest.Builder(context)
+                .data(url)
+                .allowHardware(false)
+                .build()
+
+            val result = req.context.imageLoader.execute(req)
+
+            if (result is SuccessResult) {
+                // Save the drawable as a state in order to use it on the composable
+                // Converting it to bitmap and using it to calculate the palette
+                calcDominantColor(result.drawable) { color ->
+                    onCalculated(color)
+                }
+            }
+        }
+    }
+
+
     fun searchPokemonList(query: String) {
         val listToSearch = if(isSearchStarting) {
             pokemonList.value
