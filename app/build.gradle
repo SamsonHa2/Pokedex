@@ -90,7 +90,7 @@ dependencies {
     implementation 'androidx.hilt:hilt-navigation-compose:1.1.0-alpha01'
 
     //Palette
-    //implementation('androidx.palette:palette:1.0.0')
+    implementation('androidx.palette:palette:1.0.0')
 
     // Splash Screen
     implementation("androidx.core:core-splashscreen:1.0.1")

@@ -1,8 +1,17 @@
 package com.example.somethingdex.pokemonlist
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.palette.graphics.Palette
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.example.somethingdex.data.models.PokedexListEntry
 import com.example.somethingdex.repository.PokemonRepository
 import com.example.somethingdex.util.Constants.PAGE_SIZE
@@ -32,6 +41,36 @@ class PokemonListViewModel @Inject constructor(
     init {
         loadPokemonPaginated()
     }
+
+    private fun calcDominantColor(drawable: Drawable, onFinish: (Color) -> Unit) {
+        val bmp = (drawable as BitmapDrawable).bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        Palette.from(bmp).generate{ palette ->
+            palette?.dominantSwatch?.rgb?.let { colorValue ->
+                onFinish(Color(colorValue))
+            }
+        }
+    }
+
+    fun fetchColors(url: String, context: Context, onCalculated: (Color) -> Unit) {
+        viewModelScope.launch {
+            // Requesting the image using coil's ImageRequest
+            val req = ImageRequest.Builder(context)
+                .data(url)
+                .allowHardware(false)
+                .build()
+
+            val result = req.context.imageLoader.execute(req)
+
+            if (result is SuccessResult) {
+                // Save the drawable as a state in order to use it on the composable
+                // Converting it to bitmap and using it to calculate the palette
+                calcDominantColor(result.drawable) { color ->
+                    onCalculated(color)
+                }
+            }
+        }
+    }
+
 
     fun searchPokemonList(query: String) {
         val listToSearch = if(isSearchStarting) {
@@ -65,6 +104,7 @@ class PokemonListViewModel @Inject constructor(
             when(result) {
                 is Resource.Success -> {
                     endReached.value = curPage * PAGE_SIZE >= result.data!!.count
+
                     val pokedexEntries = result.data.results.mapIndexed { index, entry ->
                         val number = if(entry.url.endsWith("/")) {
                             entry.url.dropLast(1).takeLastWhile { it.isDigit() }
@@ -72,11 +112,12 @@ class PokemonListViewModel @Inject constructor(
                             entry.url.takeLastWhile { it.isDigit() }
                         }
                         val url = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${number}.png"
+                        val types = repository.getPokemonInfo(entry.name).data!!.types
                         PokedexListEntry(entry.name.replaceFirstChar {
                             if (it.isLowerCase()) it.titlecase(
                                 Locale.ROOT
                             ) else it.toString()
-                        }, url, number.toInt())
+                        }, url, number.toInt(), types)
                     }
                     curPage++
 
