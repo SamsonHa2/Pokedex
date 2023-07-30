@@ -1,6 +1,5 @@
 package com.example.somethingdex.pokemonlist
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -39,7 +39,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,9 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.AsyncImage
-import com.example.somethingdex.R
 import com.example.somethingdex.data.models.PokedexListEntry
-import com.example.somethingdex.data.remote.responses.Type
 import java.util.Locale
 
 @Composable
@@ -58,19 +55,13 @@ fun PokemonListScreen(
     navController: NavController,
     viewModel: PokemonListViewModel = hiltViewModel()
 ) {
+
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxSize()
     ) {
         Column {
-            Spacer(modifier = Modifier.height(20.dp))
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "Pokemon",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(CenterHorizontally)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
             SearchBar(
                 hint = "Search...",
                 modifier = Modifier
@@ -79,7 +70,6 @@ fun PokemonListScreen(
             ) {
                 viewModel.searchPokemonList(it)
             }
-            Spacer(modifier = Modifier.height(16.dp))
             PokemonList(navController = navController)
         }
     }
@@ -133,30 +123,23 @@ fun PokemonList(
     navController: NavController,
     viewModel: PokemonListViewModel = hiltViewModel()
 ) {
-    val pokemonList by remember { viewModel.pokemonList }
-    val endReached by remember { viewModel.endReached }
+    val pokemonList = viewModel.pokemonList
     val loadError by remember { viewModel.loadError }
     val isLoading by remember { viewModel.isLoading }
-    val isSearching by remember { viewModel.isSearching}
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
-        val itemCount = pokemonList.size
-        items(itemCount) {
-            if(it >= itemCount - 1 && !endReached && !isLoading && !isSearching) {
-                LaunchedEffect(key1 = true) {
-                    viewModel.loadPokemonPaginated()
-                }
-            }
-            PokedexEntry(entry = pokemonList[it], navController = navController)
+        items(pokemonList) {pokemon ->
+            PokedexEntry(entry = pokemon, navController = navController)
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-
+    Text(text = "${pokemonList.size}")
     Box(
         contentAlignment = Center,
         modifier = Modifier.fillMaxSize()
     ) {
         if(isLoading) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            //LoadingScreen()
         }
         if(loadError.isNotEmpty()) {
             RetrySection(error = loadError) {
@@ -164,7 +147,6 @@ fun PokemonList(
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalCoilApi::class)
@@ -209,9 +191,9 @@ fun PokedexEntry(
         ) {
 
             //viewModel.fetchColors("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${entry.number}.png", LocalContext.current) { color ->
-            viewModel.fetchColors(entry.imageUrl, LocalContext.current) { color ->
-                dominantColor = color
-            }
+            //viewModel.fetchColors(entry.imageUrl, LocalContext.current) { color ->
+            //    dominantColor = color
+            //}
 
             Row (
                 modifier = Modifier
@@ -234,7 +216,7 @@ fun PokedexEntry(
                         .weight(0.7f)
                 )
             }
-            PokemonTypeSection(types = entry.pokemonTypes)
+            PokemonTypeSection(types = listOf(entry.type))
         }
         AsyncImage(
             model = entry.imageUrl,
@@ -265,7 +247,7 @@ fun RetrySection(
 }
 
 @Composable
-fun PokemonTypeSection(types: List<Type>) {
+fun PokemonTypeSection(types: List<String>) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -281,7 +263,7 @@ fun PokemonTypeSection(types: List<Type>) {
 
             ) {
                 Text(
-                    text = type.type.name.replaceFirstChar {
+                    text = type.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(
                             Locale.ROOT
                         ) else it.toString()

@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,28 +15,24 @@ import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.example.somethingdex.data.models.PokedexListEntry
+import com.example.somethingdex.data.pokemon.PokemonDao
 import com.example.somethingdex.repository.PokemonRepository
-import com.example.somethingdex.util.Constants.PAGE_SIZE
 import com.example.somethingdex.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
 class PokemonListViewModel @Inject constructor(
-    private val repository: PokemonRepository
+    private val repository: PokemonRepository,
+    private val dao: PokemonDao
 ): ViewModel(){
 
-    private var curPage = 0
-
-    var pokemonList = mutableStateOf<List<PokedexListEntry>>(listOf())
+    var pokemonList:List<PokedexListEntry> by mutableStateOf(listOf())
     var loadError = mutableStateOf("")
     var isLoading = mutableStateOf(false)
-    var endReached = mutableStateOf(false)
 
-    private var cachedPokemonList = listOf<PokedexListEntry>()
     private var isSearchStarting = true
     var isSearching = mutableStateOf(false)
 
@@ -73,14 +71,9 @@ class PokemonListViewModel @Inject constructor(
 
 
     fun searchPokemonList(query: String) {
-        val listToSearch = if(isSearchStarting) {
-            pokemonList.value
-        } else {
-            cachedPokemonList
-        }
+        val listToSearch = pokemonList
         viewModelScope.launch(Dispatchers.Default){
             if (query.isEmpty()) {
-                pokemonList.value = cachedPokemonList
                 isSearching.value = false
                 isSearchStarting = true
                 return@launch
@@ -90,47 +83,38 @@ class PokemonListViewModel @Inject constructor(
                         it.number.toString() == query.trim()
             }
             if (isSearchStarting) {
-                cachedPokemonList = pokemonList.value
                 isSearchStarting = false
             }
-            pokemonList.value = results
+            pokemonList = results
             isSearching.value = true
         }
     }
     fun loadPokemonPaginated() {
         viewModelScope.launch {
-            isLoading.value = true
-            val result = repository.getPokemonList(PAGE_SIZE, curPage * PAGE_SIZE)
-            when(result) {
-                is Resource.Success -> {
-                    endReached.value = curPage * PAGE_SIZE >= result.data!!.count
-
-                    val pokedexEntries = result.data.results.mapIndexed { index, entry ->
-                        val number = if(entry.url.endsWith("/")) {
-                            entry.url.dropLast(1).takeLastWhile { it.isDigit() }
-                        } else {
-                            entry.url.takeLastWhile { it.isDigit() }
+            if (pokemonList.isEmpty()) {
+                for (id in 1..100) {
+                    when (val result = repository.getPokemonInfo(id)) {
+                        is Resource.Success -> {
+                            dao.upsertPokemon(
+                                PokedexListEntry(
+                                    result.data!!.id,
+                                    result.data.name,
+                                    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${result.data.id}.png",
+                                    result.data.types[0].type.name
+                                )
+                            )
                         }
-                        val url = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${number}.png"
-                        val types = repository.getPokemonInfo(entry.name).data!!.types
-                        PokedexListEntry(entry.name.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(
-                                Locale.ROOT
-                            ) else it.toString()
-                        }, url, number.toInt(), types)
+
+                        is Resource.Error -> {
+                            TODO()
+                        }
+
+                        else -> {
+                            TODO()
+                        }
                     }
-                    curPage++
-
-                    loadError.value = ""
-                    isLoading.value = false
-                    pokemonList.value += pokedexEntries
                 }
-                is Resource.Error -> {
-                    loadError.value = result.message!!
-                    isLoading.value = false
-                }
-
-                else -> {}
+                pokemonList = repository.getAllPokemon()
             }
         }
     }

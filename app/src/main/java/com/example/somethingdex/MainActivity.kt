@@ -34,15 +34,15 @@ class MainActivity : ComponentActivity() {
                         PokemonListScreen(navController = navController)
                     }
                     composable(
-                        "pokemon_detail_screen/{pokemonName}",
+                        "pokemon_detail_screen/{id}",
                         arguments = listOf(
                             /**
                             navArgument("dominantColor") {
                                 type = NavType.IntType
                             },
                             **/
-                            navArgument("pokemonName") {
-                                type = NavType.StringType
+                            navArgument("id") {
+                                type = NavType.IntType
                             }
                         )
                     ) {
@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
                             it.arguments?.getString("pokemonName")
                         }
                         PokemonDetailScreen(
-                            pokemonName = pokemonName?.lowercase(Locale.ROOT) ?: "",
+                            id = id,
                             navController = navController
                         )
                     }

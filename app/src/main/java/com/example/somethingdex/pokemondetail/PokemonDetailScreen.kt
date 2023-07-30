@@ -59,7 +59,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun PokemonDetailScreen(
-    pokemonName: String,
+    id: Int,
     backColor: Color = Color.White,
     navController: NavController,
     topPadding: Dp = 20.dp,
@@ -67,7 +67,7 @@ fun PokemonDetailScreen(
     viewModel: PokemonDetailViewModel = hiltViewModel()
 ) {
     val pokemonInfo = produceState<Resource<Pokemon>>(initialValue = Resource.Loading()) {
-        value = viewModel.getPokemonInfo(pokemonName)
+        value = viewModel.getPokemonInfo(id)
     }.value
     Box(modifier = Modifier
         .fillMaxSize()
