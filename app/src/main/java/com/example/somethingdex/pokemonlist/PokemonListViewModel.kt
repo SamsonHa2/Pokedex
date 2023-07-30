@@ -33,6 +33,7 @@ class PokemonListViewModel @Inject constructor(
     var loadError = mutableStateOf("")
     var isLoading = mutableStateOf(false)
 
+    private var cachedPokemonList = listOf<PokedexListEntry>()
     private var isSearchStarting = true
     var isSearching = mutableStateOf(false)
 
@@ -71,9 +72,15 @@ class PokemonListViewModel @Inject constructor(
 
 
     fun searchPokemonList(query: String) {
-        val listToSearch = pokemonList
+        val listToSearch = if(isSearchStarting) {
+            pokemonList
+        } else {
+            cachedPokemonList
+        }
         viewModelScope.launch(Dispatchers.Default){
+
             if (query.isEmpty()) {
+                pokemonList = cachedPokemonList
                 isSearching.value = false
                 isSearchStarting = true
                 return@launch
@@ -83,6 +90,7 @@ class PokemonListViewModel @Inject constructor(
                         it.number.toString() == query.trim()
             }
             if (isSearchStarting) {
+                cachedPokemonList = pokemonList
                 isSearchStarting = false
             }
             pokemonList = results
