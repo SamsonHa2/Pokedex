@@ -70,7 +70,6 @@ class PokemonListViewModel @Inject constructor(
         }
     }
 
-
     fun searchPokemonList(query: String) {
         val listToSearch = if(isSearchStarting) {
             pokemonList
@@ -100,16 +99,31 @@ class PokemonListViewModel @Inject constructor(
     fun loadPokemonPaginated() {
         viewModelScope.launch {
             if (pokemonList.isEmpty()) {
-                for (id in 1..100) {
+                for (id in 1..20) {
                     when (val result = repository.getPokemonInfo(id)) {
                         is Resource.Success -> {
+                            val pokemonTypes = emptyList<String>().toMutableList()
+
                             dao.upsertPokemon(
-                                PokedexListEntry(
-                                    result.data!!.id,
-                                    result.data.name,
-                                    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${result.data.id}.png",
-                                    result.data.types[0].type.name
-                                )
+                                result.data.let { pokemon ->
+                                    for (type in pokemon!!.types){
+                                        pokemonTypes += type.type.name
+                                    }
+                                    PokedexListEntry(
+                                        number = pokemon.id,
+                                        pokemonName = pokemon.name.replaceFirstChar{it.titlecase()},
+                                        imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png",
+                                        types = pokemonTypes,
+                                        hp = pokemon.stats[0].base_stat,
+                                        attack = pokemon.stats[1].base_stat,
+                                        defense = pokemon.stats[2].base_stat,
+                                        specialAttack = pokemon.stats[3].base_stat,
+                                        specialDefense = pokemon.stats[4].base_stat,
+                                        speed = pokemon.stats[5].base_stat,
+                                        height = pokemon.height.toDouble() / 10,
+                                        weight = pokemon.weight.toDouble() / 10
+                                    )
+                                }
                             )
                         }
 
