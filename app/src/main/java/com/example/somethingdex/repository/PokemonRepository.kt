@@ -25,4 +25,13 @@ class PokemonRepository @Inject constructor(
     suspend fun getAllPokemon(): List<PokedexListEntry> {
         return dao.getAll()
     }
+
+    suspend fun getPokemon(id: Int): Resource<PokedexListEntry>{
+        val response = try{
+            dao.getPokemon(id)
+        } catch (e: Exception) {
+            return Resource.Error("An unknown error occurred.")
+        }
+        return Resource.Success(response)
+    }
 }
