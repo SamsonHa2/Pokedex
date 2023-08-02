@@ -14,4 +14,7 @@ interface PokemonDao {
     @Query ("SELECT * FROM pokedexlistentry ORDER BY number ASC")
     suspend fun getAll(): List<PokedexListEntry>
 
+    @Query ("SELECT * FROM pokedexlistentry WHERE number = :id")
+    suspend fun getPokemon(id: Int): PokedexListEntry
+
 }
