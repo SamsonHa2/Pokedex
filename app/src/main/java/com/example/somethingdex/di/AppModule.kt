@@ -2,7 +2,7 @@ package com.example.somethingdex.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.somethingdex.PokemonDatabase
+import com.example.somethingdex.data.PokemonDatabase
 import com.example.somethingdex.data.pokemon.PokemonDao
 import com.example.somethingdex.data.remote.PokeApi
 import com.example.somethingdex.repository.PokemonRepository
