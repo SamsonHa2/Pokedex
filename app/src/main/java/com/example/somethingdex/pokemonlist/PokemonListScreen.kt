@@ -38,7 +38,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -132,7 +131,6 @@ fun PokemonList(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-    Text(text = "${pokemonList.size}")
     Box(
         contentAlignment = Center,
         modifier = Modifier.fillMaxSize()
@@ -157,11 +155,6 @@ fun PokedexEntry(
     modifier: Modifier = Modifier,
     viewModel: PokemonListViewModel = hiltViewModel()
 ) {
-    val defaultDominantColor = MaterialTheme.colorScheme.surface
-    var dominantColor by remember {
-        mutableStateOf(defaultDominantColor)
-    }
-
     Box(
         contentAlignment = Center,
         modifier = modifier
@@ -173,14 +166,14 @@ fun PokedexEntry(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        dominantColor,
-                        defaultDominantColor
+                        Color(entry.color),
+                        MaterialTheme.colorScheme.surface
                     )
                 )
             )
             .clickable {
                 navController.navigate(
-                    "pokemon_detail_screen/${entry.pokemonName}"
+                    "pokemon_detail_screen/${entry.number}"
                 )
             }
     ) {
@@ -216,7 +209,7 @@ fun PokedexEntry(
                         .weight(0.7f)
                 )
             }
-            PokemonTypeSection(types = listOf(entry.type))
+            PokemonTypeSection(types = entry.types)
         }
         AsyncImage(
             model = entry.imageUrl,
