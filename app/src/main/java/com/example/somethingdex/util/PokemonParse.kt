@@ -1,13 +1,11 @@
 package com.example.somethingdex.util
 
 import androidx.compose.ui.graphics.Color
-import com.example.somethingdex.data.remote.responses.Type
-import com.example.somethingdex.data.remote.responses.Stat
 import com.example.somethingdex.ui.theme.*
 import java.util.Locale
 
-fun parseTypeToColor(type: Type): Color {
-    return when(type.type.name.lowercase(Locale.ROOT)) {
+fun parseTypeToColor(type: String): Color {
+    return when(type.lowercase(Locale.ROOT)) {
         "normal" -> TypeNormal
         "fire" -> TypeFire
         "water" -> TypeWater
@@ -27,29 +25,5 @@ fun parseTypeToColor(type: Type): Color {
         "steel" -> TypeSteel
         "fairy" -> TypeFairy
         else -> Color.Black
-    }
-}
-
-fun parseStatToColor(stat: Stat): Color {
-    return when(stat.stat.name.lowercase(Locale.ROOT)) {
-        "hp" -> HPColor
-        "attack" -> AtkColor
-        "defense" -> DefColor
-        "special-attack" -> SpAtkColor
-        "special-defense" -> SpDefColor
-        "speed" -> SpdColor
-        else -> Color.White
-    }
-}
-
-fun parseStatToAbbr(stat: Stat): String {
-    return when(stat.stat.name.lowercase(Locale.ROOT)) {
-        "hp" -> "HP"
-        "attack" -> "Atk"
-        "defense" -> "Def"
-        "special-attack" -> "SpAtk"
-        "special-defense" -> "SpDef"
-        "speed" -> "Spd"
-        else -> ""
     }
 }
