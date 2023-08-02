@@ -14,7 +14,6 @@ import com.example.somethingdex.pokemondetail.PokemonDetailScreen
 import com.example.somethingdex.pokemonlist.PokemonListScreen
 import com.example.somethingdex.ui.theme.SomethingDexTheme
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -36,21 +35,16 @@ class MainActivity : ComponentActivity() {
                     composable(
                         "pokemon_detail_screen/{id}",
                         arguments = listOf(
-                            /**
-                            navArgument("dominantColor") {
-                                type = NavType.IntType
-                            },
-                            **/
                             navArgument("id") {
-                                type = NavType.IntType
+                                type = NavType.StringType
                             }
                         )
                     ) {
-                        val pokemonName = remember {
-                            it.arguments?.getString("pokemonName")
+                        val id = remember {
+                            it.arguments?.getString("id")
                         }
                         PokemonDetailScreen(
-                            id = id,
+                            id = id?: "",
                             navController = navController
                         )
                     }
