@@ -4,6 +4,7 @@ import com.example.somethingdex.data.models.PokedexListEntry
 import com.example.somethingdex.data.pokemon.PokemonDao
 import com.example.somethingdex.data.remote.PokeApi
 import com.example.somethingdex.data.remote.responses.Pokemon
+import com.example.somethingdex.data.remote.responses.SpeciesX
 import com.example.somethingdex.util.Resource
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
@@ -16,6 +17,15 @@ class PokemonRepository @Inject constructor(
     suspend fun getPokemonInfo(id: Int): Resource<Pokemon> {
         val response = try{
             api.getPokemonInfo(id)
+        } catch (e: Exception) {
+            return Resource.Error("An unknown error occurred.")
+        }
+        return Resource.Success(response)
+    }
+
+    suspend fun getPokemonDescription(id: Int): Resource<SpeciesX> {
+        val response = try{
+            api.getPokemonDescription(id)
         } catch (e: Exception) {
             return Resource.Error("An unknown error occurred.")
         }
