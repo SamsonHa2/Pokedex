@@ -100,30 +100,45 @@ class PokemonListViewModel @Inject constructor(
         viewModelScope.launch {
             if (pokemonList.isEmpty()) {
                 for (id in 1..20) {
+                    val pokemonDescription = when (val result = repository.getPokemonDescription(id)) {
+                        is Resource.Success -> {
+                            result.data!!.flavor_text_entries[0].flavor_text
+                        }
+
+                        is Resource.Error -> {
+                            "error loading description"
+                        }
+
+                        is Resource.Loading -> {
+                            TODO()
+                        }
+                    }
                     when (val result = repository.getPokemonInfo(id)) {
                         is Resource.Success -> {
                             val pokemonTypes = emptyList<String>().toMutableList()
-
-                            dao.upsertPokemon(
-                                result.data.let { pokemon ->
-                                    for (type in pokemon!!.types){
-                                        pokemonTypes += type.type.name
-                                    }
-                                    PokedexListEntry(
-                                        number = pokemon.id,
-                                        pokemonName = pokemon.name.replaceFirstChar{it.titlecase()},
-                                        imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png",
-                                        types = pokemonTypes,
-                                        hp = pokemon.stats[0].base_stat,
-                                        attack = pokemon.stats[1].base_stat,
-                                        defense = pokemon.stats[2].base_stat,
-                                        specialAttack = pokemon.stats[3].base_stat,
-                                        specialDefense = pokemon.stats[4].base_stat,
-                                        speed = pokemon.stats[5].base_stat,
-                                        height = pokemon.height.toDouble() / 10,
-                                        weight = pokemon.weight.toDouble() / 10
-                                    )
+                            val pokemonEntry: PokedexListEntry
+                            result.data.let { pokemon ->
+                                for (type in pokemon!!.types){
+                                    pokemonTypes += type.type.name
                                 }
+                                pokemonEntry = PokedexListEntry(
+                                    number = pokemon.id,
+                                    pokemonName = pokemon.name.replaceFirstChar{it.titlecase()},
+                                    description = pokemonDescription,
+                                    imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png",
+                                    types = pokemonTypes,
+                                    hp = pokemon.stats[0].base_stat,
+                                    attack = pokemon.stats[1].base_stat,
+                                    defense = pokemon.stats[2].base_stat,
+                                    specialAttack = pokemon.stats[3].base_stat,
+                                    specialDefense = pokemon.stats[4].base_stat,
+                                    speed = pokemon.stats[5].base_stat,
+                                    height = pokemon.height.toDouble() / 10,
+                                    weight = pokemon.weight.toDouble() / 10
+                                )
+                            }
+                            dao.upsertPokemon(
+                                pokemonEntry
                             )
                         }
 
