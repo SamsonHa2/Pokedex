@@ -9,6 +9,7 @@ import androidx.room.PrimaryKey
 data class PokedexListEntry(
     @PrimaryKey val number: Int,
     val pokemonName: String,
+    val description: String,
     val imageUrl: String,
     val types: List<String>,
     val color: Int = Color.White.toArgb(),
