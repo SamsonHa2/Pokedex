@@ -17,6 +17,7 @@ import coil.request.SuccessResult
 import com.example.somethingdex.data.models.PokedexListEntry
 import com.example.somethingdex.data.pokemon.PokemonDao
 import com.example.somethingdex.repository.PokemonRepository
+import com.example.somethingdex.util.Constants.NUMBER_OF_POKEMON
 import com.example.somethingdex.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -99,10 +100,16 @@ class PokemonListViewModel @Inject constructor(
     fun loadPokemonPaginated() {
         viewModelScope.launch {
             if (pokemonList.isEmpty()) {
-                for (id in 1..20) {
+                for (id in 1..NUMBER_OF_POKEMON) {
                     val pokemonDescription = when (val result = repository.getPokemonDescription(id)) {
                         is Resource.Success -> {
-                            result.data!!.flavor_text_entries[1].flavor_text.replace("\n", " ")
+                            var description = ""
+                            for (entry in result.data!!.flavor_text_entries){
+                                if (entry.language.name == "en"){
+                                    description = entry.flavor_text
+                                }
+                            }
+                            description
                         }
 
                         is Resource.Error -> {
