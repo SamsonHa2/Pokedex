@@ -102,7 +102,7 @@ class PokemonListViewModel @Inject constructor(
                 for (id in 1..20) {
                     val pokemonDescription = when (val result = repository.getPokemonDescription(id)) {
                         is Resource.Success -> {
-                            result.data!!.flavor_text_entries[0].flavor_text
+                            result.data!!.flavor_text_entries[1].flavor_text.replace("\n", " ")
                         }
 
                         is Resource.Error -> {
