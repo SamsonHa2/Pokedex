@@ -106,7 +106,7 @@ class PokemonListViewModel @Inject constructor(
                             var description = ""
                             for (entry in result.data!!.flavor_text_entries){
                                 if (entry.language.name == "en"){
-                                    description = entry.flavor_text
+                                    description = entry.flavor_text.replace("\n", " ")
                                 }
                             }
                             description
