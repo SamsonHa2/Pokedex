@@ -3,6 +3,7 @@ package com.example.somethingdex.pokemondetail
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,8 +39,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -47,27 +47,22 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.somethingdex.R
-import com.example.somethingdex.data.remote.responses.Pokemon
-import com.example.somethingdex.data.remote.responses.Type
+import com.example.somethingdex.data.models.PokedexListEntry
 import com.example.somethingdex.util.Resource
-import com.example.somethingdex.util.parseStatToAbbr
-import com.example.somethingdex.util.parseStatToColor
-import com.example.somethingdex.util.parseTypeToColor
 import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
 fun PokemonDetailScreen(
-    pokemonName: String,
+    id: String,
     backColor: Color = Color.White,
     navController: NavController,
     topPadding: Dp = 20.dp,
     pokemonImageSize: Dp = 200.dp,
     viewModel: PokemonDetailViewModel = hiltViewModel()
 ) {
-    val pokemonInfo = produceState<Resource<Pokemon>>(initialValue = Resource.Loading()) {
-        value = viewModel.getPokemonInfo(pokemonName)
+    val pokemonInfo = produceState<Resource<PokedexListEntry>>(initialValue = Resource.Loading()) {
+        value = viewModel.getPokemonInfo(id)
     }.value
     Box(modifier = Modifier
         .fillMaxSize()
@@ -111,10 +106,10 @@ fun PokemonDetailScreen(
             .fillMaxSize()) {
 
             if (pokemonInfo is Resource.Success){
-                pokemonInfo.data?.sprites?.let {
+                pokemonInfo.data?.let {
                     AsyncImage(
-                        model = it.front_default,
-                        contentDescription = pokemonInfo.data.name,
+                        model = it.imageUrl,
+                        contentDescription = it.pokemonName,
                         modifier = Modifier
                             .size(pokemonImageSize)
                             .offset(y = topPadding)
@@ -158,7 +153,7 @@ fun PokemonDetailTopSection(
 
 @Composable
 fun PokemonDetailStateWrapper(
-    pokemonInfo: Resource<Pokemon>,
+    pokemonInfo: Resource<PokedexListEntry>,
     modifier: Modifier = Modifier,
     loadingModifier: Modifier = Modifier
 ) {
@@ -187,31 +182,41 @@ fun PokemonDetailStateWrapper(
 }
 
 @Composable
-
 fun PokemonDetailSection(
-    pokemonInfo: Pokemon,
+    pokemonInfo: PokedexListEntry,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .fillMaxSize()
             .offset(y = 100.dp)
+            .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
-        Text(
-            text = "#${pokemonInfo.id} ${pokemonInfo.name.replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(
-                    Locale.ROOT
-                ) else it.toString()
-            }}",
-            fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 22.dp)
+        ) {
+            Text(
+                text = "#${pokemonInfo.number.toString().padStart(4, '0')}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                textAlign = TextAlign.Start,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = pokemonInfo.pokemonName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                textAlign = TextAlign.End,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .weight(1f)
+            )
+        }
         PokemonTypeSection(types = pokemonInfo.types)
+        DescriptionSection(description = pokemonInfo.description)
         PokemonDetailDataSection(
             pokemonWeight = pokemonInfo.weight,
             pokemonHeight = pokemonInfo.height
@@ -221,22 +226,40 @@ fun PokemonDetailSection(
 }
 
 @Composable
-fun PokemonTypeSection(types: List<Type>) {
+fun DescriptionSection(description: String){
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 20.dp, vertical = 16.dp)) {
+        Text(
+            text = description,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 10.dp)
+        )
+    }
+}
+
+@Composable
+fun PokemonTypeSection(types: List<String>) {
     Row(
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(22.dp)
     ) {
+        Spacer(modifier = Modifier.width(0.dp))
         for (type in types) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp)
-                    .clip(CircleShape)
-                    .background(parseTypeToColor(type))
+                    .border(1.dp, Color.White, RoundedCornerShape(20.dp))
+                    .background(Color.Transparent)
                     .height(35.dp)
             ) {
                 Text(
-                    text = type.type.name.replaceFirstChar {
+                    text = type.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(
                             Locale.ROOT
                         ) else it.toString()
@@ -246,14 +269,14 @@ fun PokemonTypeSection(types: List<Type>) {
                 )
             }
         }
+        Spacer(modifier = Modifier.width(0.dp))
     }
 }
 
 @Composable
 fun PokemonDetailDataSection(
-    pokemonWeight: Int,
-    pokemonHeight: Int,
-    sectionHeight: Dp = 80.dp
+    pokemonWeight: Double,
+    pokemonHeight: Double,
 ) {
     val pokemonWeightInKg = remember {
         (pokemonWeight * 100f).roundToInt() / 1000f
@@ -262,24 +285,22 @@ fun PokemonDetailDataSection(
         (pokemonHeight * 100f).roundToInt() / 1000f
     }
     Row(
+        horizontalArrangement = Arrangement.spacedBy(22.dp),
         modifier = Modifier
             .fillMaxWidth()
     ) {
+        Spacer(modifier = Modifier.width(0.dp))
         PokemonDetailDataItem(
             dataValue = pokemonWeightInKg,
             dataUnit = "kg",
-            dataIcon = painterResource(id = R.drawable.ic_launcher_foreground),
             modifier = Modifier.weight(1f)
         )
-        Spacer(modifier = Modifier
-            .size(1.dp, sectionHeight)
-            .background(Color.LightGray))
         PokemonDetailDataItem(
             dataValue = pokemonHeightInMeters,
             dataUnit = "m",
-            dataIcon = painterResource(id = R.drawable.ic_launcher_foreground),
             modifier = Modifier.weight(1f)
         )
+        Spacer(modifier = Modifier.width(0.dp))
     }
 }
 
@@ -287,19 +308,22 @@ fun PokemonDetailDataSection(
 fun PokemonDetailDataItem(
     dataValue: Float,
     dataUnit: String,
-    dataIcon: Painter,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
-    ) {
-        Icon(painter = dataIcon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-        Spacer(modifier = Modifier.height(8.dp))
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color.White, RoundedCornerShape(10.dp))
+            .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp))
+    ){
         Text(
-            text = "$dataValue$dataUnit",
-            color = MaterialTheme.colorScheme.onSurface
+            text = "$dataValue" + dataUnit,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .padding(horizontal = 22.dp, vertical = 18.dp)
         )
     }
 }
@@ -310,7 +334,6 @@ fun PokemonStat(
     statName: String,
     statValue: Int,
     statMaxValue: Int,
-    statColor: Color,
     height: Dp = 28.dp,
     animDuration: Int = 1000,
     animDelay: Int = 0
@@ -325,14 +348,13 @@ fun PokemonStat(
         animationSpec = tween(
             animDuration,
             animDelay
-        )
+        ), label = ""
     )
     LaunchedEffect(key1 = true) {
         animationPlayed = true
     }
     Box(
         modifier = Modifier
-            .fillMaxWidth()
             .height(height)
             .clip(CircleShape)
             .background(
@@ -342,6 +364,7 @@ fun PokemonStat(
                     Color.LightGray
                 }
             )
+            .fillMaxWidth()
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -350,7 +373,7 @@ fun PokemonStat(
                 .fillMaxHeight()
                 .fillMaxWidth(curPercent.value)
                 .clip(CircleShape)
-                .background(statColor)
+                .background(Color.White)
                 .padding(horizontal = 8.dp)
         ) {
             Text(
@@ -367,29 +390,26 @@ fun PokemonStat(
 
 @Composable
 fun PokemonBaseStats(
-    pokemonInfo: Pokemon,
+    pokemonInfo: PokedexListEntry,
     animDelayPerItem: Int = 100
 ) {
+    val statNames = listOf("HP", "Atk", "Def", "SpAtk", "SpAtk", "Spd")
+    val stats = listOf(pokemonInfo.hp, pokemonInfo.attack, pokemonInfo.defense, pokemonInfo.specialAttack, pokemonInfo.specialDefense, pokemonInfo.speed)
     val maxBaseStat = remember {
-        pokemonInfo.stats.maxOf { it.base_stat }
+        maxOf(pokemonInfo.hp, pokemonInfo.attack, pokemonInfo.defense, pokemonInfo.specialAttack, pokemonInfo.specialDefense, pokemonInfo.speed)
     }
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 22.dp)
     ) {
-        Text(
-            text = "Base stats:",
-            fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-
-        for(i in pokemonInfo.stats.indices) {
-            val stat = pokemonInfo.stats[i]
+        Spacer(modifier = Modifier.height(12.dp))
+        for(i in stats.indices) {
+            val stat = stats[i]
             PokemonStat(
-                statName = parseStatToAbbr(stat),
-                statValue = stat.base_stat,
+                statName = statNames[i],
+                statValue = stat,
                 statMaxValue = maxBaseStat,
-                statColor = parseStatToColor(stat),
                 animDelay = i * animDelayPerItem
             )
             Spacer(modifier = Modifier.height(8.dp))

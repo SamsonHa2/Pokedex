@@ -1,29 +1,44 @@
 package com.example.somethingdex.repository
 
+import com.example.somethingdex.data.models.PokedexListEntry
+import com.example.somethingdex.data.pokemon.PokemonDao
 import com.example.somethingdex.data.remote.PokeApi
 import com.example.somethingdex.data.remote.responses.Pokemon
-import com.example.somethingdex.data.remote.responses.PokemonList
+import com.example.somethingdex.data.remote.responses.SpeciesX
 import com.example.somethingdex.util.Resource
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 
 @ActivityScoped
 class PokemonRepository @Inject constructor(
-    private val api: PokeApi
+    private val api: PokeApi,
+    private val dao: PokemonDao
 ){
-
-    suspend fun getPokemonList(limit: Int, offset: Int): Resource<PokemonList> {
+    suspend fun getPokemonInfo(id: Int): Resource<Pokemon> {
         val response = try{
-            api.getPokemonList(limit, offset)
+            api.getPokemonInfo(id)
         } catch (e: Exception) {
             return Resource.Error("An unknown error occurred.")
         }
         return Resource.Success(response)
     }
 
-    suspend fun getPokemonInfo(pokemonName:String): Resource<Pokemon> {
+    suspend fun getPokemonDescription(id: Int): Resource<SpeciesX> {
         val response = try{
-            api.getPokemonInfo(pokemonName)
+            api.getPokemonDescription(id)
+        } catch (e: Exception) {
+            return Resource.Error("An unknown error occurred.")
+        }
+        return Resource.Success(response)
+    }
+
+    suspend fun getAllPokemon(): List<PokedexListEntry> {
+        return dao.getAll()
+    }
+
+    suspend fun getPokemon(id: Int): Resource<PokedexListEntry>{
+        val response = try{
+            dao.getPokemon(id)
         } catch (e: Exception) {
             return Resource.Error("An unknown error occurred.")
         }
